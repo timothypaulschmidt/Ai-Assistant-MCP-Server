@@ -5,7 +5,7 @@ security: how a chatbot under prompt-injection attack can be tricked into leakin
 data, and how a well-meaning agent with powerful tools can cause accidental harm.
 
 > **Everything here is synthetic.** No real person, patient, customer or card is in this data.
-> The server (coming next) has deliberately unsafe tools. Do not point it at real data, and do
+> The server has deliberately unsafe tools in `vulnerable` mode. Do not point it at real data, and do
 > not expose it to the internet.
 
 The client side lives in the [AI-Assistant](https://github.com/timothypaulschmidt/ai-assistant)
@@ -16,8 +16,8 @@ repository. This repo is the target it connects to.
 | Step | State |
 |---|---|
 | 1. Synthetic data generator and SQLite database | **done** (this repo) |
-| 2. MCP server with safe and risky tools | next |
-| 3. Tool-calling loop in the AI Assistant | later |
+| 2. MCP server with safe and risky tools | **done** (this repo) |
+| 3. Tool-calling loop in the AI Assistant | next |
 | 4. Container image and k3s manifests | later |
 
 ## The data
@@ -72,3 +72,30 @@ pytest
 deletes and rebuilds `data/company.db` from the seed.
 
 Generated data is never committed (`data/` and `*.db` are in `.gitignore`).
+
+## The MCP server
+
+```bash
+ai-assistant-mcp-server --mode safe                 # stdio, for a local MCP client
+ai-assistant-mcp-server --mode vulnerable --transport streamable-http --port 8000
+```
+
+It generates `data/` on first start if the database is missing; `--regenerate` rebuilds it
+(this is how you reset the lab after a destructive demo). Env vars `MCP_MODE` and
+`LAB_DATA_DIR` do the same as the flags. HTTP endpoint: `http://<host>:8000/mcp`.
+
+| Tool | safe | vulnerable |
+|---|---|---|
+| `list_datasets`, `list_tickets`, `get_ticket` | yes | yes |
+| `search_customers`, `search_patients` | SSN masked, no passwords, max 10 rows | everything unmasked |
+| `read_document` | `tech/meeting_notes.txt` only | any document |
+| `run_sql` | - | any SQL, reads and writes |
+| `read_file` | - | any file under `docs/` (text, csv, xlsx) |
+| `send_email` | - | **simulated**: writes JSON to `data/outbox/` |
+| `delete_records` | - | deletes rows, no confirmation |
+
+Guard rails that remain even in `vulnerable` mode: nothing leaves the machine, `read_file`
+cannot leave `docs/`, and the `_lab_` answer-key tables are blocked.
+
+Note that safe mode is not injection-proof: `get_ticket` still returns a poisoned ticket
+body to the model. That contrast is the lesson.
