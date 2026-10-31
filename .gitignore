@@ -1,0 +1,27 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+
+# Generated lab data: always rebuilt from the seed, never committed
+data/
+*.db
+*.sqlite
+
+# Local settings and secrets
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
