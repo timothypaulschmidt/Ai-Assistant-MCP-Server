@@ -9,6 +9,7 @@ description = "Intentionally vulnerable MCP server with synthetic data, for AI s
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "mcp>=2.3,<3",
     "faker>=30",
     "openpyxl>=3.1",
 ]
@@ -17,6 +18,7 @@ dependencies = [
 dev = ["pytest>=8"]
 
 [project.scripts]
+ai-assistant-mcp-server = "ai_assistant_mcp_server.server:main"
 fake-corp-generate = "ai_assistant_mcp_server.generate:main"
 
 [tool.setuptools.packages.find]
