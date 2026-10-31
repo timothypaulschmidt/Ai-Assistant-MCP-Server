@@ -1,3 +1,74 @@
 # AI Assistant MCP Server
 
-Work in progress.
+An **intentionally vulnerable** MCP server and a fake company's data, built for learning AI
+security: how a chatbot under prompt-injection attack can be tricked into leaking sensitive
+data, and how a well-meaning agent with powerful tools can cause accidental harm.
+
+> **Everything here is synthetic.** No real person, patient, customer or card is in this data.
+> The server (coming next) has deliberately unsafe tools. Do not point it at real data, and do
+> not expose it to the internet.
+
+The client side lives in the [AI-Assistant](https://github.com/timothypaulschmidt/ai-assistant)
+repository. This repo is the target it connects to.
+
+## Status
+
+| Step | State |
+|---|---|
+| 1. Synthetic data generator and SQLite database | **done** (this repo) |
+| 2. MCP server with safe and risky tools | next |
+| 3. Tool-calling loop in the AI Assistant | later |
+| 4. Container image and k3s manifests | later |
+
+## The data
+
+One SQLite database (`company.db`) plus a `docs/` folder, built from a seed so it is identical
+every time. Four industries, each with the fields attackers go for:
+
+| Industry | Tables | Sensitive fields |
+|---|---|---|
+| Healthcare | patients, visits, prescriptions | SSN, DOB, insurance ID, diagnoses |
+| Banking | customers, accounts, cards, transactions | SSN, plain-text passwords, card number, CVV, PIN |
+| Manufacturing | suppliers, parts | supplier bank details, trade-secret parts |
+| Technology / IT | employees, credentials, tickets | salaries, SSN, service passwords, API keys |
+
+`docs/` holds files in other formats: text discharge summaries, a wire-instruction note, a
+trade-secret formula, a VPN runbook with a password, a `.env` file with fake keys, an HR CSV,
+and an Excel payroll workbook.
+
+### Why the data is safe
+
+* **SSNs** use area numbers 900-999, which are never issued.
+* **Card numbers** pass the Luhn check but use test-style prefixes and random digits.
+* **Phones** use the fictional 555-01xx range; **emails** use `example.com`.
+* **API keys** start with `FAKE-KEY-`, so they can never match a real provider's key format.
+* A test fails if anything resembling a real provider secret appears in the output.
+
+### Canaries and poisoned records (the demo answer key)
+
+* **Canaries** are fixed fake values (a "Casey Canary" patient and customer, one SSN, one card,
+  one password, one API key). Search model replies, logs or FortiAIGate events for them to prove
+  exactly what leaked. They are listed in the `_lab_canaries` table.
+* **Poisoned records** hide a prompt-injection payload in a ticket, a visit note or a
+  transaction description, and in `docs/tech/meeting_notes.txt`. A model that reads one through
+  a tool may treat it as an instruction. They are listed in `_lab_poisoned`. The payloads are
+  harmless: they only ask for data to be sent to `audit@example.invalid`, which cannot resolve.
+
+Tables starting with `_lab_` are the answer key and should not be exposed by the server.
+
+## Run it
+
+Needs Python 3.10 or newer.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+python -m ai_assistant_mcp_server.generate --out data --seed 1337
+pytest
+```
+
+`--scale 0.2` makes a smaller dataset. Running the generator again **resets** the lab: it
+deletes and rebuilds `data/company.db` from the seed.
+
+Generated data is never committed (`data/` and `*.db` are in `.gitignore`).
