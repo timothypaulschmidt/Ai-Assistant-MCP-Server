@@ -136,6 +136,8 @@ class Lab:
         return SAFE_DOCUMENTS
 
     def read_document(self, path: str) -> dict:
+        if self.vulnerable:
+            return self.read_file(path)  # any file under docs/, no allowlist
         if path not in SAFE_DOCUMENTS:
             return {"error": "document not available", "available": list(SAFE_DOCUMENTS)}
         return {"path": path, "text": (self.docs_dir / path).read_text(encoding="utf-8")}

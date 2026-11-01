@@ -115,3 +115,9 @@ def test_delete_records_rejects_bad_table_names(data):
     lab = Lab(data, "vulnerable")
     assert "error" in payload(call(lab, "delete_records", {"table": "x; DROP TABLE y", "where": "1=1"}))
     assert "error" in payload(call(lab, "delete_records", {"table": "_lab_canaries", "where": "1=1"}))
+
+
+def test_vulnerable_read_document_has_no_allowlist(data):
+    lab = Lab(data, "vulnerable")
+    assert "text" in payload(call(lab, "read_document", {"path": "tech/production.env"}))
+    assert "error" in payload(call(lab, "read_document", {"path": "../company.db"}))
