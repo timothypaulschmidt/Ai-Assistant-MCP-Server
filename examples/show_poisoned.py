@@ -2,14 +2,21 @@
 values are planted. Reads the database file directly (the MCP server itself cannot,
 because it blocks the _lab_ tables).
 
-Usage:  python examples/show_poisoned.py [data-dir]      (default: data)
-Run it from the repo folder, or pass the folder the server was started with.
+Usage:  python examples/show_poisoned.py [data-dir]
+
+With no argument it uses ./data if that exists, otherwise the repo's own data folder, so
+it works from the repo folder or from inside examples/. Pass a folder if the server was
+started with a different --data-dir.
 """
 import sqlite3
 import sys
 from pathlib import Path
 
-data_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("data")
+if len(sys.argv) > 1:
+    data_dir = Path(sys.argv[1])
+else:
+    here = Path("data")
+    data_dir = here if (here / "company.db").exists() else Path(__file__).resolve().parent.parent / "data"
 db = data_dir / "company.db"
 if not db.exists():
     sys.exit(f"{db} not found. Start the server once (it creates the data), or pass the data folder.")
