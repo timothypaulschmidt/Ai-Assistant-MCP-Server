@@ -99,3 +99,13 @@ cannot leave `docs/`, and the `_lab_` answer-key tables are blocked.
 
 Note that safe mode is not injection-proof: `get_ticket` still returns a poisoned ticket
 body to the model. That contrast is the lesson.
+
+### Check every tool
+
+With the server running in either mode, in a second terminal:
+
+```bash
+python examples/try_tools.py            # default http://localhost:8000/mcp
+```
+
+It detects the mode and prints PASS/FAIL for what that mode should and should not allow.
