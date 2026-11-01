@@ -9,9 +9,9 @@ has deliberately unsafe tools.
 ```powershell
 cd <your clone of Ai-Assistant-MCP-Server>
 git checkout main; git pull
-docker build -t timothypaulschmidt/ai-assistant-mcp-server:v0.1.0 .
+docker build -t timothypaulschmidt/ai-assistant-mcp-server:v0.1.1 .
 docker login            # once per machine
-docker push timothypaulschmidt/ai-assistant-mcp-server:v0.1.0
+docker push timothypaulschmidt/ai-assistant-mcp-server:v0.1.1
 ```
 
 The tag must match `newTag` in `deploy/k8s/kustomization.yaml`. Change both together when

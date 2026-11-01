@@ -8,7 +8,7 @@ from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
-from .generate import DB_NAME, build_dataset
+from .generate import COMPLETE_MARKER, build_dataset
 from .tools import Lab
 
 INSTRUCTIONS = (
@@ -75,6 +75,18 @@ def create_server(lab: Lab) -> MCPServer:
     return server
 
 
+def ensure_data(data: Path, seed: int = 1337, regenerate: bool = False) -> bool:
+    """Generate the fake data unless a complete copy is already there.
+
+    "Complete" means the marker written at the end of generation exists. A folder with a
+    database but no marker is a half-finished run and is rebuilt. Returns True if it built.
+    """
+    if regenerate or not (data / COMPLETE_MARKER).exists():
+        build_dataset(data, seed=seed)
+        return True
+    return False
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description="Intentionally vulnerable MCP server (fake data).")
     p.add_argument("--mode", choices=["safe", "vulnerable"], default=os.environ.get("MCP_MODE", "safe"))
@@ -89,8 +101,7 @@ def main(argv: list[str] | None = None) -> None:
     a = p.parse_args(argv)
 
     data = Path(a.data_dir)
-    if a.regenerate or not (data / DB_NAME).exists():
-        build_dataset(data, seed=a.seed)
+    ensure_data(data, a.seed, a.regenerate)
 
     server = create_server(Lab(data, a.mode))
     if a.transport == "stdio":
