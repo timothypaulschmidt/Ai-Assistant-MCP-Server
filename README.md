@@ -109,3 +109,12 @@ python examples/try_tools.py            # default http://localhost:8000/mcp
 ```
 
 It detects the mode and prints PASS/FAIL for what that mode should and should not allow.
+
+### See the answer key
+
+```bash
+python examples/show_poisoned.py            # or pass the data folder as an argument
+```
+
+Lists which records hold an injection payload (and of which kind) and the canary values, so
+you know which ticket or transaction to point a model at.
