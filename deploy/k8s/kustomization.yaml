@@ -1,0 +1,16 @@
+# Apply with:  kubectl apply -k deploy/k8s
+# Goes into the same namespace as the AI Assistant. Apply the assistant's stack first
+# (it creates the namespace), or run: kubectl create namespace ai-assistant
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ai-assistant
+
+resources:
+  - deployment.yaml
+  - service.yaml
+
+# To deploy a new version: push the image to Docker Hub, change newTag, apply again.
+images:
+  - name: timothypaulschmidt/ai-assistant-mcp-server
+    newTag: v0.1.0
