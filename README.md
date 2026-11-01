@@ -18,7 +18,7 @@ repository. This repo is the target it connects to.
 | 1. Synthetic data generator and SQLite database | **done** (this repo) |
 | 2. MCP server with safe and risky tools | **done** (this repo) |
 | 3. Tool-calling loop in the AI Assistant | next |
-| 4. Container image and k3s manifests | later |
+| 4. Container image and k3s manifests | **done** (see `deploy/README.md`) |
 
 ## The data
 
