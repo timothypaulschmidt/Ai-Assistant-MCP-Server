@@ -37,6 +37,10 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            # The root filesystem is read-only, but Python (openpyxl writes the Excel
+            # file through a temp file) needs a writable /tmp.
+            - name: tmp
+              mountPath: /tmp
           # Generating the fake data on first start takes a few seconds, so give the
           # container time before the other probes begin. (TCP probes: the /mcp URL
           # answers GET with an error by design, so an HTTP probe would never pass.)
@@ -73,3 +77,6 @@ spec:
         #   kubectl -n ai-assistant rollout restart deployment/mcp-server
         - name: data
           emptyDir: {}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

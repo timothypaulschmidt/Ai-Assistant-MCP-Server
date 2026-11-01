@@ -65,10 +65,19 @@ def _poison(rng: random.Random, rows: list) -> dict[int, str]:
     return {pos: PAYLOAD_KINDS[i % len(PAYLOAD_KINDS)] for i, pos in enumerate(picks)}
 
 
+COMPLETE_MARKER = ".complete"
+
+
 def build_dataset(out_dir, seed: int = DEFAULT_SEED, scale: float = 1.0) -> dict:
-    """Create out_dir/company.db and out_dir/docs/. Returns row counts and paths."""
+    """Create out_dir/company.db and out_dir/docs/. Returns row counts and paths.
+
+    A marker file is written last. If generation stops half way (for example a crash),
+    the marker is missing, so the next start knows the data is incomplete and rebuilds
+    it instead of trusting a database that has no documents next to it.
+    """
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    (out / COMPLETE_MARKER).unlink(missing_ok=True)
     db_path = out / DB_NAME
     for suffix in ("", "-wal", "-shm", "-journal"):
         Path(str(db_path) + suffix).unlink(missing_ok=True)
@@ -215,6 +224,7 @@ def build_dataset(out_dir, seed: int = DEFAULT_SEED, scale: float = 1.0) -> dict
     con.close()
 
     docs = _write_documents(out / "docs", rng, employees, patients)
+    (out / COMPLETE_MARKER).write_text("ok\n", encoding="utf-8")
     return {"db": str(db_path), "docs": docs, "counts": counts, "seed": seed}
 
 

@@ -121,3 +121,20 @@ def test_vulnerable_read_document_has_no_allowlist(data):
     lab = Lab(data, "vulnerable")
     assert "text" in payload(call(lab, "read_document", {"path": "tech/production.env"}))
     assert "error" in payload(call(lab, "read_document", {"path": "../company.db"}))
+
+
+def test_ensure_data_builds_once_and_rebuilds_a_half_finished_folder(tmp_path):
+    from ai_assistant_mcp_server.generate import COMPLETE_MARKER
+    from ai_assistant_mcp_server.server import ensure_data
+
+    assert ensure_data(tmp_path, seed=3) is True           # first start: builds
+    assert (tmp_path / COMPLETE_MARKER).exists()
+    assert ensure_data(tmp_path, seed=3) is False          # second start: leaves it alone
+
+    # A crash half way leaves a database but no marker (and missing documents):
+    (tmp_path / COMPLETE_MARKER).unlink()
+    (tmp_path / "docs" / "hr" / "payroll_2026.xlsx").unlink()
+    assert ensure_data(tmp_path, seed=3) is True           # rebuilt, not trusted
+    assert (tmp_path / "docs" / "hr" / "payroll_2026.xlsx").exists()
+
+    assert ensure_data(tmp_path, seed=3, regenerate=True) is True   # --regenerate still forces it
