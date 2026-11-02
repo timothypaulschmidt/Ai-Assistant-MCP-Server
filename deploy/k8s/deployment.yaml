@@ -34,6 +34,15 @@ spec:
               value: "vulnerable"
             - name: LAB_DATA_DIR
               value: /data
+            # Turns on the /admin/* routes (reset / insert tickets). The token comes from a
+            # Secret you create by hand (see deploy/README.md); it is never in git. Without
+            # the Secret the pod still starts, with the admin routes switched off.
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-admin
+                  key: token
+                  optional: true
           volumeMounts:
             - name: data
               mountPath: /data

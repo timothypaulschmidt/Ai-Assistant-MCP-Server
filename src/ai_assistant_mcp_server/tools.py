@@ -28,6 +28,7 @@ from .generate import DB_NAME
 MAX_ROWS_SAFE = 10
 MAX_ROWS_SQL = 200
 SAFE_DOCUMENTS = ("tech/meeting_notes.txt",)
+TICKET_STATUSES = ("open", "in_progress", "pending", "closed")
 _IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
@@ -38,11 +39,13 @@ def mask_ssn(value: str) -> str:
 class Lab:
     """The data directory plus the mode the server runs in."""
 
-    def __init__(self, data_dir: str | Path, mode: str = "safe") -> None:
+    def __init__(self, data_dir: str | Path, mode: str = "safe", seed: int = 1337, scale: float = 1.0) -> None:
         if mode not in ("safe", "vulnerable"):
             raise ValueError("mode must be 'safe' or 'vulnerable'")
         self.data_dir = Path(data_dir).resolve()
         self.mode = mode
+        self.seed = seed    # used by the admin "full reset", which rebuilds everything
+        self.scale = scale
         self.db_path = self.data_dir / DB_NAME
         self.docs_dir = self.data_dir / "docs"
         self.outbox = self.data_dir / "outbox"
@@ -126,7 +129,57 @@ class Lab:
             "SELECT id, created_by, title, body, status FROM tech_tickets WHERE id=?",
             (ticket_id,),
         )
-        return rows[0] if rows else {"error": f"no ticket {ticket_id}"}
+        if not rows:
+            return {"error": f"no ticket {ticket_id}"}
+        ticket = rows[0]
+        ticket["comments"] = self._rows(
+            "SELECT author, body, created_at FROM tech_ticket_comments WHERE ticket_id=? ORDER BY id",
+            (ticket_id,),
+        )
+        return ticket
+
+    # -- ticket write tools (what a helpdesk agent needs) --------------------------
+
+    def create_ticket(self, title: str, body: str, created_by: int = 1) -> dict:
+        title, body = title.strip()[:200], body.strip()[:4000]
+        if not title or not body:
+            return {"error": "title and body are required"}
+        with self.connect() as con:
+            if not con.execute("SELECT 1 FROM tech_employees WHERE id=?", (created_by,)).fetchone():
+                return {"error": f"no employee {created_by}"}
+            cur = con.execute(
+                "INSERT INTO tech_tickets (created_by, title, body, status) VALUES (?,?,?, 'open')",
+                (created_by, title, body),
+            )
+            return {"id": cur.lastrowid, "status": "open"}
+
+    def update_ticket_status(self, ticket_id: int, status: str) -> dict:
+        if status not in TICKET_STATUSES:
+            return {"error": f"status must be one of {list(TICKET_STATUSES)}"}
+        with self.connect() as con:
+            cur = con.execute("UPDATE tech_tickets SET status=? WHERE id=?", (status, ticket_id))
+            if cur.rowcount == 0:
+                return {"error": f"no ticket {ticket_id}"}
+        return {"id": ticket_id, "status": status}
+
+    def add_comment(self, ticket_id: int, text: str, author: str = "helpdesk-agent") -> dict:
+        text, author = text.strip()[:2000], author.strip()[:60] or "unknown"
+        if not text:
+            return {"error": "comment text is required"}
+        with self.connect() as con:
+            if not con.execute("SELECT 1 FROM tech_tickets WHERE id=?", (ticket_id,)).fetchone():
+                return {"error": f"no ticket {ticket_id}"}
+            cur = con.execute(
+                "INSERT INTO tech_ticket_comments (ticket_id, author, body, created_at) VALUES (?,?,?,?)",
+                (ticket_id, author, text, time.strftime("%Y-%m-%dT%H:%M:%S")),
+            )
+            return {"comment_id": cur.lastrowid, "ticket_id": ticket_id}
+
+    def close_ticket(self, ticket_id: int, resolution: str) -> dict:
+        added = self.add_comment(ticket_id, f"Resolution: {resolution}")
+        if "error" in added:
+            return added
+        return self.update_ticket_status(ticket_id, "closed")
 
     def allowed_documents(self) -> tuple[str, ...]:
         if self.vulnerable:

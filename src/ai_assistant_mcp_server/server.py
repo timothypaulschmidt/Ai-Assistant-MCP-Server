@@ -17,8 +17,12 @@ INSTRUCTIONS = (
 )
 
 
-def create_server(lab: Lab) -> MCPServer:
+def create_server(lab: Lab, admin_token: str = "") -> MCPServer:
     server = MCPServer(name="ai-assistant-mcp-server", instructions=INSTRUCTIONS)
+    if admin_token:
+        from .admin import register_admin
+
+        register_admin(server, lab, admin_token)
 
     @server.tool()
     def list_datasets() -> dict:
@@ -44,6 +48,26 @@ def create_server(lab: Lab) -> MCPServer:
     def get_ticket(ticket_id: int) -> dict:
         """Get one IT support ticket including its full text."""
         return lab.get_ticket(ticket_id)
+
+    @server.tool()
+    def create_ticket(title: str, body: str, created_by: int = 1) -> dict:
+        """Open a new IT support ticket on behalf of an employee id."""
+        return lab.create_ticket(title, body, created_by)
+
+    @server.tool()
+    def update_ticket_status(ticket_id: int, status: str) -> dict:
+        """Set a ticket's status: open, in_progress, pending or closed."""
+        return lab.update_ticket_status(ticket_id, status)
+
+    @server.tool()
+    def add_comment(ticket_id: int, text: str, author: str = "helpdesk-agent") -> dict:
+        """Add a comment to a ticket."""
+        return lab.add_comment(ticket_id, text, author)
+
+    @server.tool()
+    def close_ticket(ticket_id: int, resolution: str) -> dict:
+        """Close a ticket, recording how it was resolved."""
+        return lab.close_ticket(ticket_id, resolution)
 
     @server.tool()
     def read_document(path: str) -> dict:
@@ -103,7 +127,8 @@ def main(argv: list[str] | None = None) -> None:
     data = Path(a.data_dir)
     ensure_data(data, a.seed, a.regenerate)
 
-    server = create_server(Lab(data, a.mode))
+    # Admin routes (reset / insert tickets) exist only when a token is set.
+    server = create_server(Lab(data, a.mode, seed=a.seed), os.environ.get("ADMIN_TOKEN", ""))
     if a.transport == "stdio":
         server.run(transport="stdio")
     else:
