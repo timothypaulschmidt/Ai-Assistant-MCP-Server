@@ -1,4 +1,4 @@
-# AI Assistant MCP Server
+# MCP Server
 
 An **intentionally vulnerable** MCP server and a fake company's data, built for learning AI
 security: how a chatbot under prompt-injection attack can be tricked into leaking sensitive
@@ -76,8 +76,8 @@ Generated data is never committed (`data/` and `*.db` are in `.gitignore`).
 ## The MCP server
 
 ```bash
-ai-assistant-mcp-server --mode safe                 # stdio, for a local MCP client
-ai-assistant-mcp-server --mode vulnerable --transport streamable-http --port 8000
+mcp-server --mode safe                 # stdio, for a local MCP client
+mcp-server --mode vulnerable --transport streamable-http --port 8000
 ```
 
 It generates `data/` on first start if the database is missing; `--regenerate` rebuilds it
