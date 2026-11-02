@@ -20,8 +20,9 @@ import re
 import sqlite3
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from .generate import DB_NAME
 
@@ -67,15 +68,30 @@ class Lab:
         con.set_authorizer(authorizer)
         return con
 
+    @contextmanager
+    def db(self) -> Iterator[sqlite3.Connection]:
+        """A connection that is committed on success, rolled back on error, and always
+        closed. (`with sqlite3.connect(...)` alone only commits: it leaves the connection
+        open, which on Windows stops the admin reset from deleting company.db.)"""
+        con = self.connect()
+        try:
+            yield con
+            con.commit()
+        except BaseException:
+            con.rollback()
+            raise
+        finally:
+            con.close()
+
     def _rows(self, sql: str, params: tuple = ()) -> list[dict]:
-        with self.connect() as con:
+        with self.db() as con:
             return [dict(r) for r in con.execute(sql, params).fetchall()]
 
     # -- safe tools ------------------------------------------------------------
 
     def list_datasets(self) -> dict:
         out = {}
-        with self.connect() as con:
+        with self.db() as con:
             names = [
                 r[0]
                 for r in con.execute(
@@ -144,7 +160,7 @@ class Lab:
         title, body = title.strip()[:200], body.strip()[:4000]
         if not title or not body:
             return {"error": "title and body are required"}
-        with self.connect() as con:
+        with self.db() as con:
             if not con.execute("SELECT 1 FROM tech_employees WHERE id=?", (created_by,)).fetchone():
                 return {"error": f"no employee {created_by}"}
             cur = con.execute(
@@ -156,7 +172,7 @@ class Lab:
     def update_ticket_status(self, ticket_id: int, status: str) -> dict:
         if status not in TICKET_STATUSES:
             return {"error": f"status must be one of {list(TICKET_STATUSES)}"}
-        with self.connect() as con:
+        with self.db() as con:
             cur = con.execute("UPDATE tech_tickets SET status=? WHERE id=?", (status, ticket_id))
             if cur.rowcount == 0:
                 return {"error": f"no ticket {ticket_id}"}
@@ -166,7 +182,7 @@ class Lab:
         text, author = text.strip()[:2000], author.strip()[:60] or "unknown"
         if not text:
             return {"error": "comment text is required"}
-        with self.connect() as con:
+        with self.db() as con:
             if not con.execute("SELECT 1 FROM tech_tickets WHERE id=?", (ticket_id,)).fetchone():
                 return {"error": f"no ticket {ticket_id}"}
             cur = con.execute(
@@ -199,7 +215,7 @@ class Lab:
 
     def run_sql(self, query: str) -> dict:
         try:
-            with self.connect() as con:
+            with self.db() as con:
                 cur = con.execute(query)
                 if cur.description is None:
                     return {"rows_affected": cur.rowcount}
@@ -233,7 +249,7 @@ class Lab:
         if not _IDENT.match(table):
             return {"error": "bad table name"}
         try:
-            with self.connect() as con:
+            with self.db() as con:
                 cur = con.execute(f'DELETE FROM "{table}" WHERE {where}')
                 return {"deleted": cur.rowcount}
         except sqlite3.Error as exc:
