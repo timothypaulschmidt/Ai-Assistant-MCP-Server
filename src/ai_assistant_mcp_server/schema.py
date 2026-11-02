@@ -120,6 +120,13 @@ CREATE TABLE tech_tickets (
     body TEXT NOT NULL,
     status TEXT NOT NULL
 );
+CREATE TABLE tech_ticket_comments (
+    id INTEGER PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES tech_tickets(id),
+    author TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 
 -- answer key for the demos (not for the MCP server to expose) --------------
 CREATE TABLE _lab_canaries (
