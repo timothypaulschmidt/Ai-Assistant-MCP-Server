@@ -64,7 +64,7 @@ Needs Python 3.10 or newer.
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m ai_assistant_mcp_server.generate --out data --seed 1337
+python -m mcp_server.generate --out data --seed 1337
 pytest
 ```
 

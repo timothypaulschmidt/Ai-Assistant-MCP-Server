@@ -1,6 +1,6 @@
 """Build the synthetic company: a SQLite database plus a folder of documents.
 
-    python -m ai_assistant_mcp_server.generate --out data --seed 1337
+    python -m mcp_server.generate --out data --seed 1337
 
 The same seed always produces the same data (and the same canaries and poisoned
 records), so "reset the lab" is just running this again.

@@ -4,10 +4,10 @@ import sqlite3
 import pytest
 from starlette.testclient import TestClient
 
-from ai_assistant_mcp_server import helpdesk
-from ai_assistant_mcp_server.generate import build_dataset
-from ai_assistant_mcp_server.server import create_server
-from ai_assistant_mcp_server.tools import Lab
+from mcp_server import helpdesk
+from mcp_server.generate import build_dataset
+from mcp_server.server import create_server
+from mcp_server.tools import Lab
 
 from test_server import call, payload  # same helpers as the other server tests
 

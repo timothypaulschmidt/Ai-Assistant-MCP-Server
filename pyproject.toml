@@ -18,8 +18,8 @@ dependencies = [
 dev = ["pytest>=8"]
 
 [project.scripts]
-ai-assistant-mcp-server = "ai_assistant_mcp_server.server:main"
-fake-corp-generate = "ai_assistant_mcp_server.generate:main"
+ai-assistant-mcp-server = "mcp_server.server:main"
+fake-corp-generate = "mcp_server.generate:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

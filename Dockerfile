@@ -21,4 +21,4 @@ USER appuser
 EXPOSE 8000
 
 # The mode is chosen at run time (MCP_MODE=safe|vulnerable). The default is safe.
-CMD ["python", "-m", "ai_assistant_mcp_server", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "mcp_server", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
