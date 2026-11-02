@@ -7,17 +7,12 @@ has deliberately unsafe tools.
 ## 1. Build and push the image (Windows, Docker Desktop running)
 
 ```powershell
-cd <your clone of Ai-Assistant-MCP-Server>
+cd <your clone of MCP-Server>
 git checkout main; git pull
 docker build -t timothypaulschmidt/mcp-server:v0.2.1 .
 docker login            # once per machine
 docker push timothypaulschmidt/mcp-server:v0.2.1
 ```
-
-The image was renamed from `timothypaulschmidt/ai-assistant-mcp-server` to
-`timothypaulschmidt/mcp-server`, and the Python package from `ai_assistant_mcp_server` to
-`mcp_server`. Docker Hub cannot rename a repository, so v0.2.1 is simply built and pushed
-under the new name (a retag of an older image would still contain the old package name).
 
 The tag must match `newTag` in `deploy/k8s/kustomization.yaml`. Change both together when
 the code changes.

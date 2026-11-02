@@ -18,7 +18,7 @@ INSTRUCTIONS = (
 
 
 def create_server(lab: Lab, admin_token: str = "") -> MCPServer:
-    server = MCPServer(name="ai-assistant-mcp-server", instructions=INSTRUCTIONS)
+    server = MCPServer(name="mcp-server", instructions=INSTRUCTIONS)
     if admin_token:
         from .admin import register_admin
 
