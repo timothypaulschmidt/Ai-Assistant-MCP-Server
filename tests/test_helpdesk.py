@@ -131,3 +131,40 @@ def test_admin_reset_and_insert_over_http(lab):
 def test_admin_is_not_an_mcp_tool(lab):
     names = call(Lab(lab.data_dir, "vulnerable"), "__list__")
     assert not [n for n in names if "reset" in n or "insert" in n or "admin" in n]
+
+
+def test_every_tool_call_closes_its_connection(lab, monkeypatch):
+    """Windows cannot delete company.db while a connection is open, so none may be left
+    behind (sqlite3's own `with` only commits; it does not close). Records close() calls
+    rather than probing the connection, because tools run in a worker thread."""
+    import sqlite3
+
+    opened = []
+
+    class Tracked(sqlite3.Connection):
+        was_closed = False
+
+        def close(self):
+            self.was_closed = True
+            super().close()
+
+    real_connect = sqlite3.connect
+
+    def tracking_connect(*args, **kwargs):
+        con = real_connect(*args, factory=Tracked, **kwargs)
+        opened.append(con)
+        return con
+
+    monkeypatch.setattr(sqlite3, "connect", tracking_connect)
+    vuln = Lab(lab.data_dir, "vulnerable")
+    for tool, args in [
+        ("list_datasets", {}), ("search_customers", {"name": "a"}), ("list_tickets", {}),
+        ("get_ticket", {"ticket_id": 1}), ("create_ticket", {"title": "t", "body": "b"}),
+        ("add_comment", {"ticket_id": 1, "text": "c"}), ("update_ticket_status", {"ticket_id": 1, "status": "open"}),
+        ("close_ticket", {"ticket_id": 1, "resolution": "r"}), ("run_sql", {"query": "SELECT 1"}),
+        ("run_sql", {"query": "SELECT * FROM no_such_table"}), ("delete_records", {"table": "mfg_parts", "where": "1=0"}),
+        ("delete_records", {"table": "mfg_parts", "where": "bad sql ("}),
+    ]:
+        payload(call(vuln, tool, args))
+    assert len(opened) >= 12
+    assert [c for c in opened if not c.was_closed] == []
