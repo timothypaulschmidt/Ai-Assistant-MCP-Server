@@ -1,6 +1,6 @@
 import random
 
-from ai_assistant_mcp_server import fakes
+from mcp_server import fakes
 
 
 def test_luhn_known_values():

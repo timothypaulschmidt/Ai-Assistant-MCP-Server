@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from ai_assistant_mcp_server import fakes
-from ai_assistant_mcp_server.generate import DB_NAME, build_dataset
-from ai_assistant_mcp_server.payloads import CANARIES, PAYLOADS
+from mcp_server import fakes
+from mcp_server.generate import DB_NAME, build_dataset
+from mcp_server.payloads import CANARIES, PAYLOADS
 
 
 @pytest.fixture(scope="module")
