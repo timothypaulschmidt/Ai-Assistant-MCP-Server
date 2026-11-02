@@ -5,10 +5,10 @@ import sqlite3
 import pytest
 from mcp.client import Client
 
-from ai_assistant_mcp_server.generate import build_dataset
-from ai_assistant_mcp_server.payloads import CANARIES
-from ai_assistant_mcp_server.server import create_server
-from ai_assistant_mcp_server.tools import Lab
+from mcp_server.generate import build_dataset
+from mcp_server.payloads import CANARIES
+from mcp_server.server import create_server
+from mcp_server.tools import Lab
 
 
 @pytest.fixture()
@@ -124,8 +124,8 @@ def test_vulnerable_read_document_has_no_allowlist(data):
 
 
 def test_ensure_data_builds_once_and_rebuilds_a_half_finished_folder(tmp_path):
-    from ai_assistant_mcp_server.generate import COMPLETE_MARKER
-    from ai_assistant_mcp_server.server import ensure_data
+    from mcp_server.generate import COMPLETE_MARKER
+    from mcp_server.server import ensure_data
 
     assert ensure_data(tmp_path, seed=3) is True           # first start: builds
     assert (tmp_path / COMPLETE_MARKER).exists()
