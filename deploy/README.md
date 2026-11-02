@@ -9,9 +9,18 @@ has deliberately unsafe tools.
 ```powershell
 cd <your clone of Ai-Assistant-MCP-Server>
 git checkout main; git pull
-docker build -t timothypaulschmidt/ai-assistant-mcp-server:v0.2.0 .
+docker build -t timothypaulschmidt/mcp-server:v0.2.0 .
 docker login            # once per machine
-docker push timothypaulschmidt/ai-assistant-mcp-server:v0.2.0
+docker push timothypaulschmidt/mcp-server:v0.2.0
+```
+
+The image was renamed from `timothypaulschmidt/ai-assistant-mcp-server` to
+`timothypaulschmidt/mcp-server` (Docker Hub cannot rename a repository). To publish the
+existing v0.2.0 under the new name without rebuilding:
+
+```powershell
+docker tag timothypaulschmidt/ai-assistant-mcp-server:v0.2.0 timothypaulschmidt/mcp-server:v0.2.0
+docker push timothypaulschmidt/mcp-server:v0.2.0
 ```
 
 The tag must match `newTag` in `deploy/k8s/kustomization.yaml`. Change both together when

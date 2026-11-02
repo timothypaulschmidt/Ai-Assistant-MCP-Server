@@ -22,7 +22,7 @@ spec:
       containers:
         - name: mcp-server
           # The tag is set in kustomization.yaml (images:)
-          image: timothypaulschmidt/ai-assistant-mcp-server
+          image: timothypaulschmidt/mcp-server
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
